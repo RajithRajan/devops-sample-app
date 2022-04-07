@@ -16,5 +16,10 @@ services:
       - mongodb-devops
   mongodb-devops:
     image: mongo
+    volumes:
+      - db_data:/data/db
+    container_name: devops-db      
     ports:
       - "27017:27017"
+volumes:
+    db_data:      
