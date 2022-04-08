@@ -1,0 +1,69 @@
+pipeline {
+  agent any
+    
+  //tools {nodejs "node"}
+    
+  stages {
+        
+    stage('Git') {
+      steps {
+        git branch: 'develop', url: 'https://github.com/RajithRajan/devops-sample-app.git'
+      }
+    }
+    
+    stage('Build Angular') {
+        steps {
+            dir("client\\angular-app") { 
+                bat 'npm install'
+            }
+        }
+    }
+    stage('SonarQube analysis Proj') {
+      steps {
+        script {
+          def scannerHome = tool 'sonarscan';
+          withSonarQubeEnv('sonar') {
+                bat "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=meanstack -Dsonar.projectName=devops-sample-app"
+          }
+        }
+      }
+    }     
+//    stage('Test Angular') {
+//        steps {
+//            dir("client\\angular-app") { 
+//                bat 'node test'
+//            }            
+//        }
+//    }
+    
+//    stage('Static code analysis') {
+//        steps {
+//            dir("server\\") {
+//                bat 'echo ${BUILD_URL}'
+//                bat 'echo ${WORKSPACE}'                
+//                bat 'npm run-script sonar' 
+//            }
+//        }
+//    }
+
+//    stage('Test Node') {
+//        steps {
+//            dir("server") { 
+//                catchError {
+//                    bat 'node test'
+//                }
+//            }            
+//        }
+//    }
+
+    stage('Build') {
+        steps { 
+            dir("server") {
+                bat 'npm install' 
+                bat 'npm rebuild'
+            }
+        }    
+    }        
+  }
+  
+}
