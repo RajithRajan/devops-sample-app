@@ -4,30 +4,37 @@ pipeline {
   //tools {nodejs "node"}
     
   stages {
-        
+    stage("verify tools"){
+      steps{
+        bat '''
+        git --version
+        docker version
+        docker info
+        docker compose version
+        npm version
+        '''
+      }
+    }
+
     stage('Git') {
       steps {
-        git branch: 'develop', url: 'https://github.com/RajithRajan/devops-sample-app.git'
+        git branch: 'develop', credentialsId: 'jenkins-gitab', url: 'http://192.168.1.11/devops/devops-sample-app.git'
       }
     }
     
-    stage('Build Angular') {
+    stage('Build UI Angular') {
         steps {
             dir("client\\angular-app") { 
+              // Installed angulat cli locally with in the project
+                bat 'npm install @angular/cli --save-dev'
+              // Install the the dependency packages needed for the app  
                 bat 'npm install'
+              // run the build  
+                bat 'npm run build'
             }
         }
     }
-    stage('SonarQube analysis Proj') {
-      steps {
-        script {
-          def scannerHome = tool 'sonarscan';
-          withSonarQubeEnv('sonar') {
-                bat "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=meanstack -Dsonar.projectName=devops-sample-app"
-          }
-        }
-      }
-    }     
+     
 //    stage('Test Angular') {
 //        steps {
 //            dir("client\\angular-app") { 
@@ -56,14 +63,58 @@ pipeline {
 //        }
 //    }
 
-    stage('Build') {
+    stage('Build Backend NodeJS') {
         steps { 
             dir("server") {
+              // Install the the dependency packages needed for the app  
                 bat 'npm install' 
-                bat 'npm rebuild'
+              // run the build   
+                bat 'npm run build'
             }
         }    
-    }        
+    }  
+    stage('SonarQube analysis Proj') {
+      steps {
+        script {
+          def scannerHome = tool 'sonarscan';
+          withSonarQubeEnv('sonar') {
+                bat "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=meanstack -Dsonar.projectName=devops-sample-app"
+          }
+        }
+      }
+    }
+    stage('Build docker for UI') {
+      steps {
+        script {
+          echo " Docker build "
+        }
+      }
+    }       
+
+    stage('Build docker for Angular') {
+      steps {
+        script {
+          echo " Docker build "
+        }
+      }
+    }  
+
+    stage('Publish docker to docker hub') {
+      steps {
+        script {
+          echo " Docker publish "
+        }
+      }
+    }   
+
+    stage('Deploy to K8S') {
+      steps {
+        script {
+          echo " Deploy to K8S "
+        }
+      }
+    }          
+
   }
   
 }
