@@ -1,4 +1,13 @@
 pipeline {
+  // setting variables used for the build
+  environment {
+    registry = "rajithr007/"
+    registryCredential = 'Jenkins-dockerhub'
+    dockerImageFE = ''
+    dockerImageBE  = ''
+  }  
+  
+  // Setting the agent for the pipeline
   agent any
     
   //tools {nodejs "node"}
@@ -70,7 +79,7 @@ pipeline {
               // Install the the dependency packages needed for the app  
                 bat 'npm install' 
               // run the build   
-                bat 'npm run build'
+                //bat 'npm run build'
             }
         }    
     }  
@@ -87,7 +96,9 @@ pipeline {
     stage('Build docker for UI') {
       steps {
         script {
-          echo " Docker build "
+            dir("client\\angular-app") {
+                dockerImageFE = docker.build registry + "devops-sample-app-ui" + ":$BUILD_NUMBER"
+            }    
         }
       }
     }       
@@ -95,7 +106,9 @@ pipeline {
     stage('Build docker for Angular') {
       steps {
         script {
-          echo " Docker build "
+            dir('server') {
+                dockerImageBE = docker.build registry + "devops-sample-app-be" + ":$BUILD_NUMBER"
+            } 
         }
       }
     }  
@@ -103,7 +116,10 @@ pipeline {
     stage('Publish docker to docker hub') {
       steps {
         script {
-          echo " Docker publish "
+          docker.withRegistry( '', registryCredential ) {
+            dockerImageFE.push()
+            dockerImageBE.push()
+          }
         }
       }
     }   
@@ -114,8 +130,20 @@ pipeline {
           echo " Deploy to K8S "
         }
       }
-    }          
+    }
 
-  }
-  
+  } //end of stages
+    
+    post { 
+        always { 
+            //Remove Unused docker imag
+            bat "docker rmi ${registry}devops-sample-app-ui:$BUILD_NUMBER"
+            bat "docker rmi ${registry}devops-sample-app-be:$BUILD_NUMBER"
+        }
+        success {
+            echo "=============================================="
+            echo '************ Job completed successfully!'
+            echo "=============================================="
+        }        
+    }  // end of post 
 }
