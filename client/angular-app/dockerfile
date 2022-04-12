@@ -1,7 +1,6 @@
 FROM nginx:alpine
 
-COPY ./dist/angular-app /usr/share/nginx
+COPY ./dist/angular-app /usr/share/nginx/ht
 
-RUN npm install
 EXPOSE 80 443
 ENTRYPOINT [ "nginx", "-g", "daemon off;" ]
