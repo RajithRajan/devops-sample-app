@@ -1,11 +1,20 @@
 version: '3'
 services:
+  mongodb-devops:
+    image: mongo
+    ports:
+      - "27017:27017"
+    container_name: devops-db
+    volumes:
+      - db_data:/data/db
   nodejs-server:
     build:
       context: ./server
     ports:
       - "3003:3003"
     container_name: devops-server
+    depends_on:
+      - mongodb-devops
   angular-ui:
     build:
       context: ./client/angular-app
